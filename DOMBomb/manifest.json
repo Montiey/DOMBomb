@@ -1,0 +1,30 @@
+{
+	"name": "DOMBomber",
+	"version": "1.0",
+	"description": "All your content are belong to us",
+	"icons": {
+		"128": "images/icon700.png"
+	},
+	"permissions": [
+		"activeTab"
+	],
+	
+	
+	"content_scripts": [
+		{
+			"matches": ["<all_urls>"],
+			"js": [
+				"jquery-3.3.1.min.js",
+				"bobomb.js"
+			]
+		}
+	],
+	
+	
+	"browser_action":{
+		"default_title": "Click here for total global thermonuclear war",
+		"default_popup": "popupMenu.html"
+	},
+	"manifest_version": 2
+	
+}
