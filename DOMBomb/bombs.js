@@ -27,7 +27,11 @@ chrome.runtime.onMessage.addListener(function(response, sender, sendResponse){	/
 	
 	if(response === "disco" && discoInterval == null){
 		$("body").addClass("DOMBombDiscoBackground");
-		doTree($("body"), function(midpoint){}, function(endpoint){
+		doTree($("body"), function(midpoint){
+			if($(midpoint).height() > 0 && $(midpoint).width() > 0){	//No useless stuff
+				$(midpoint).addClass("DOMBombDiscoBackground");
+			}
+		}, function(endpoint){
 			if($(endpoint).height() > 0 && $(endpoint).width() > 0){	//No useless stuff
 				$(endpoint).addClass("DOMBombDiscoBackground");
 			}
@@ -76,8 +80,11 @@ function moveBomb(elem, targets){
 		var boom = document.createElement("img");
 		boom.setAttribute("src", chrome.runtime.getURL("images/boom.gif"));
 		boom.classList.add("boom");
+		$(boom).css("height", 200);
+		$(boom).css("width", 200);
 		$(boom).css("top", thisPos.top - ($(boom).height()/2));
 		$(boom).css("left", thisPos.left - ($(boom).width()/2));
+		
 		$("body").prepend(boom);
 		
 		setTimeout(function(){
