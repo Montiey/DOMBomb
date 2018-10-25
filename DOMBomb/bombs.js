@@ -1,13 +1,17 @@
 var currentHue = 0;
 var hueSpeed = 1/6;
-setInterval(colorize, 250);
+var discoInterval;
+var bombLaunched = false;
 
 chrome.runtime.onMessage.addListener(function(response, sender, sendResponse){	//Listen for button presses from popupMenu html/js
-	if(response === "bobomb"){
-		var targets = [];	//each position includes top, left, and (TODO?) whether or not to explode at the end
+	if(response === "bobomb" && !bombLaunched){
+		bombLaunched = true;
+		var targets = [];
 		
 		doTree($("body"), function(midpoint){}, function(endpoint){
-			targets.push(endpoint);
+			if($(endpoint).offset().top > 0 && $(endpoint).offset().left > 0){
+				targets.push(endpoint);
+			}
 		});
 		
 		var omb = document.createElement("img");
@@ -19,17 +23,20 @@ chrome.runtime.onMessage.addListener(function(response, sender, sendResponse){	/
 		$("body").prepend(omb);
 		
 		moveBomb(omb, targets);
-		
-	} else if(response === "disco"){
-		$("body").addClass("DOMBombDiscoText");
-		doTree($("body"), function(midpoint){
-		}, function(endpoint){
+	}
+	
+	if(response === "disco" && discoInterval == null){
+		$("body").addClass("DOMBombDiscoBackground");
+		doTree($("body"), function(midpoint){}, function(endpoint){
 			if($(endpoint).height() > 0 && $(endpoint).width() > 0){	//No useless stuff
-				$(endpoint).addClass("DOMBombDiscoBorder");
+				$(endpoint).addClass("DOMBombDiscoBackground");
 			}
 		});
+		
+		discoInterval = setInterval(colorize, 250);
 	} else{
-		console.log("bad message");
+		clearInterval(discoInterval);
+		discoInterval = null;
 	}
 });
 
@@ -60,7 +67,6 @@ function moveBomb(elem, targets){
 	}
 	
 	var duration = getDist(elem, thisTarget) / .5;	//px / ms bomb speed
-	console.log(duration);
 	
 	
 	$(elem).animate({
@@ -70,8 +76,8 @@ function moveBomb(elem, targets){
 		var boom = document.createElement("img");
 		boom.setAttribute("src", chrome.runtime.getURL("images/boom.gif"));
 		boom.classList.add("boom");
-		$(boom).css("top", thisPos.top);
-		$(boom).css("left", thisPos.left);
+		$(boom).css("top", thisPos.top - ($(boom).height()/2));
+		$(boom).css("left", thisPos.left - ($(boom).width()/2));
 		$("body").prepend(boom);
 		
 		setTimeout(function(){
@@ -136,13 +142,13 @@ function HSVtoRGB(h, s, v) {
 function colorize(){
 	var rgb = HSVtoRGB(currentHue, 1, 1);
 	
-	$(".DOMBombDiscoBorder").each(function(index, data){
-		$(data).css("border", "1px solid rgb(" + rgb.r + "," + rgb.g + "," + rgb.b + ")");
-	});
-	
-	$(".DOMBombDiscoText").each(function(index, data){
-		$(data).css("color", "rgb(" + rgb.r + "," + rgb.g + "," + rgb.b + ")");
-	});
+//	$(".DOMBombDiscoBorder").each(function(index, data){
+//		$(data).css("border", "1px solid rgb(" + rgb.r + "," + rgb.g + "," + rgb.b + ")");
+//	});
+//	
+//	$(".DOMBombDiscoText").each(function(index, data){
+//		$(data).css("color", "rgb(" + rgb.r + "," + rgb.g + "," + rgb.b + ")");
+//	});
 	
 	$(".DOMBombDiscoBackground").each(function(index, data){
 		$(data).css("background-color", "rgb(" + rgb.r + "," + rgb.g + "," + rgb.b + ")");
