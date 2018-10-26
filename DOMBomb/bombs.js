@@ -17,12 +17,13 @@ chrome.runtime.onMessage.addListener(function(response, sender, sendResponse){	/
 		var omb = document.createElement("img");
 		
 		omb.setAttribute("src", chrome.runtime.getURL("images/bobomb.gif"));
-		
+		$(omb).css("height", 50);
+		$(omb).css("width", 50);
 		omb.classList.add("bobomb");
 		
 		$("body").prepend(omb);
-		
-		moveBomb(omb, targets);
+				
+		moveBomb(omb, getShortPath(targets));
 	}
 	
 	if(response === "disco" && discoInterval == null){
@@ -46,22 +47,10 @@ chrome.runtime.onMessage.addListener(function(response, sender, sendResponse){	/
 
 ////////
 
-function doTree(elem, forAll, forEnd){	//does stuff on the DOM tree
-	if($(elem).children().length == 0){	//if this element is an endpoint
-		forEnd(elem);
-	}
-	else {
-		forAll(elem);
-		$(elem).children().each(function(index, data){	//if this element is not and endpoint, then check all of its children...
-			doTree(data, forAll, forEnd);
-		});
-	}
-}
-
 function moveBomb(elem, targets){
 	var lastLeft = getCenter(elem).left;
 	
-	var thisTarget = $(targets.shift());
+	var thisTarget = targets.shift();
 	var thisPos = getCenter(thisTarget);
 	
 	if(thisPos.left > lastLeft){
@@ -70,12 +59,11 @@ function moveBomb(elem, targets){
 		elem.style.transform = "scaleX(1)";
 	}
 	
-	var duration = getDist(elem, thisTarget) / .5;	//px / ms bomb speed
-	
+	var duration = getDist(elem, thisTarget) / .2;	//px / ms bomb speed
 	
 	$(elem).animate({
-			top: thisPos.top + "px",
-			left: thisPos.left + "px"
+			top: thisPos.top - ($(elem).height()/2) + "px",
+			left: thisPos.left - ($(elem).width()/2) + "px"
 	}, duration, "linear", function(){	//on complete
 		var boom = document.createElement("img");
 		boom.setAttribute("src", chrome.runtime.getURL("images/boom.gif"));
@@ -96,7 +84,6 @@ function moveBomb(elem, targets){
 			moveBomb(elem, targets);
 		}
 		else{
-			console.log("No more elements to nuke.");
 			setTimeout(function(){
 				$(elem).remove();
 			}, 2000);
@@ -104,8 +91,48 @@ function moveBomb(elem, targets){
 	});
 }
 
-function getDist(elem1, elem2){
+function doTree(elem, forAll, forEnd){	//does stuff on the DOM tree
+	if($(elem).children().length == 0){	//if this element is an endpoint
+		forEnd(elem);
+	}
+	else {
+		forAll(elem);
+		$(elem).children().each(function(index, data){	//if this element is not and endpoint, then check all of its children...
+			doTree(data, forAll, forEnd);
+		});
+	}
+}
+
+function getShortPath(elements){	//list of dom elements
+	var numElements = elements.length;	//set this to start
+	var newList = [];
+	var lastCandidate;
 	
+	var temp = elements.shift();
+	newList.push(temp);
+	lastCandidate = temp;
+	
+	for(var i = 0; i < numElements; i++){
+		var bestDist = 9999999999999;
+		var winner;
+		for(var candidate of elements){
+			var thisDist = getDist(candidate, lastCandidate);
+			if(thisDist < bestDist){
+				bestDist = thisDist;
+				winner = candidate;
+			}
+		}
+		elements.splice(elements.indexOf(winner), 1);
+		
+		newList.push(winner);
+		lastCandidate = winner;
+		
+	}
+	
+	return newList;
+}
+
+function getDist(elem1, elem2){	//two dom elements
 	var center1 = getCenter(elem1);
 	var center2 = getCenter(elem2);
 	
@@ -114,7 +141,7 @@ function getDist(elem1, elem2){
 	return Math.sqrt(Math.pow(y, 2) + Math.pow(x, 2));
 }
 
-function getCenter(elem){
+function getCenter(elem){	//dom element
 	return {
 		top: $(elem).offset().top + ($(elem).height()/2),
 		left: $(elem).offset().left + ($(elem).width()/2)
